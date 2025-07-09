@@ -9,11 +9,11 @@ Sistema completo de gerenciamento de publicidades com backend Rails e frontend A
 - **Banco:** PostgreSQL 16
 - **Containerização:** Docker & Docker Compose
 
-## �� Pré-requisitos
+##  Pré-requisitos
 
 - Docker
 - Docker Compose
 - Git
 
-## �� Instalação e Execução
+##  Instalação e Execução
 
