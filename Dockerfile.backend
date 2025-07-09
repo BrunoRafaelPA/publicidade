@@ -1,0 +1,60 @@
+# backend/Dockerfile
+# Estágio base com dependências comuns
+FROM ruby:3.4.4-alpine AS base
+
+# Instalar dependências do sistema
+RUN apk add --no-cache \
+    build-base \
+    postgresql-dev \
+    git \
+    tzdata \
+    gcompat \
+    bash \
+    curl \
+    && rm -rf /var/cache/apk/*
+
+# Definir diretório de trabalho
+WORKDIR /app
+
+# Copiar arquivos de dependências
+COPY Gemfile Gemfile.lock ./
+
+# Estágio de desenvolvimento
+FROM base AS development
+
+# Instalar todas as gems (incluindo development e test)
+RUN bundle install
+
+# Expor porta
+EXPOSE 3000
+
+# Comando para desenvolvimento
+CMD ["rails", "server", "-b", "0.0.0.0"]
+
+# Estágio de produção
+FROM base AS production
+
+# Criar usuário não-root
+RUN addgroup -g 1000 -S appgroup && \
+    adduser -u 1000 -S appuser -G appgroup
+
+# Instalar gems apenas de produção
+RUN bundle config --global frozen 1 && \
+    bundle install --without development test && \
+    bundle clean --force && \
+    rm -rf /usr/local/bundle/cache/*.gem
+
+# Copiar código da aplicação
+COPY . .
+
+# Mudar ownership para usuário não-root
+RUN chown -R appuser:appgroup /app
+
+# Mudar para usuário não-root
+USER appuser
+
+# Expor porta
+EXPOSE 3000
+
+# Comando para produção
+CMD ["rails", "server", "-b", "0.0.0.0"]

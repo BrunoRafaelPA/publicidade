@@ -1,0 +1,86 @@
+# docker-compose.yml
+services:
+  database:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${DATABASE_PORT_EXPOSED}:5432"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "${BACKEND_PORT}:3000"
+    volumes:
+      - ./backend:/app
+      - bundle_cache:/usr/local/bundle
+      - rails_storage:/app/storage
+      - rails_tmp:/app/tmp
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - app-network
+    stdin_open: true
+    tty: true
+    command: >
+      bash -c "
+        echo 'Aguardando banco de dados...' &&
+        sleep 10 &&
+        bundle install &&
+        echo 'Removendo PID se existir...' &&
+        rm -f tmp/pids/server.pid &&
+        echo 'Criando banco de dados...' &&
+        bundle exec rails db:create 2>/dev/null || echo 'Banco já existe' &&
+        echo 'Executando migrações...' &&
+        bundle exec rails db:migrate 2>/dev/null || echo 'Nenhuma migração pendente' &&
+        echo 'Iniciando servidor Rails...' &&
+        bundle exec rails server -b 0.0.0.0 -p 3000
+      "
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: development
+      NG_CLI_ANALYTICS: false
+    ports:
+      - "${FRONTEND_PORT}:4200"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - app-network
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  bundle_cache:
+  rails_storage:
+  rails_tmp:
+
+networks:
+  app-network:
+    driver: bridge

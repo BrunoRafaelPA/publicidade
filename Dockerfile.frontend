@@ -1,0 +1,83 @@
+# frontend/Dockerfile
+# Estágio base com Node.js
+FROM node:20-alpine AS base
+
+# Instalar dependências do sistema
+RUN apk add --no-cache \
+    git \
+    && rm -rf /var/cache/apk/*
+
+# Definir diretório de trabalho
+WORKDIR /app
+
+# Copiar arquivos de dependências
+COPY package*.json ./
+
+# Estágio de desenvolvimento
+FROM base AS development
+
+# Instalar todas as dependências (incluindo devDependencies)
+RUN npm ci
+
+# Copiar código fonte
+COPY . .
+
+# Expor porta para desenvolvimento
+EXPOSE 4200
+
+# Comando para desenvolvimento com hot reload
+CMD ["npm", "start", "--", "--host", "0.0.0.0", "--port", "4200", "--disable-host-check"]
+
+# Estágio de build para produção
+FROM base AS builder
+
+# Instalar dependências
+RUN npm ci --only=production && npm ci
+
+# Copiar código fonte
+COPY . .
+
+# Build da aplicação para produção
+RUN npm run build
+
+# Estágio de produção com Nginx
+FROM nginx:alpine AS production
+
+# Instalar curl para health checks
+RUN apk add --no-cache curl
+
+# Remover configuração padrão do Nginx
+RUN rm -rf /usr/share/nginx/html/*
+
+# Copiar arquivos buildados do estágio anterior
+COPY --from=builder /app/dist/publicidade /usr/share/nginx/html
+
+# Copiar configuração customizada do Nginx
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Criar usuário não-root
+RUN addgroup -g 1001 -S nginx && \
+    adduser -S nginx -G nginx
+
+# Dar permissões corretas
+RUN chown -R nginx:nginx /usr/share/nginx/html && \
+    chown -R nginx:nginx /var/cache/nginx && \
+    chown -R nginx:nginx /var/log/nginx && \
+    chown -R nginx:nginx /etc/nginx/conf.d
+
+# Criar diretório para PID do nginx
+RUN touch /var/run/nginx.pid && \
+    chown -R nginx:nginx /var/run/nginx.pid
+
+# Mudar para usuário não-root
+USER nginx
+
+# Expor porta
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8080/ || exit 1
+
+# Comando para iniciar Nginx
+CMD ["nginx", "-g", "daemon off;"]

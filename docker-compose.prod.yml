@@ -1,0 +1,79 @@
+# docker-compose.prod.yml
+version: '3.8'
+
+services:
+  # Banco de dados PostgreSQL
+  database:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+    networks:
+      - app-network-prod
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Backend Rails
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    environment:
+      DATABASE_URL: postgresql://${DATABASE_USERNAME}:${DATABASE_PASSWORD}@database:5432/${DATABASE_NAME}
+      RAILS_ENV: production
+      RAILS_SERVE_STATIC_FILES: "true"
+      RAILS_LOG_TO_STDOUT: "true"
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      BINDING: ${BINDING}
+      TZ: ${TZ}
+    volumes:
+      - rails_storage_prod:/app/storage
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - app-network-prod
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Frontend Angular
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+    environment:
+      NODE_ENV: production
+    ports:
+      - "${FRONTEND_PORT}:8080"
+    depends_on:
+      - backend
+    networks:
+      - app-network-prod
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  postgres_data_prod:
+  rails_storage_prod:
+
+networks:
+  app-network-prod:
+    driver: bridge

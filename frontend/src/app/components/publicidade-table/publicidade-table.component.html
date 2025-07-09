@@ -1,0 +1,389 @@
+<p-toast position="top-center" [style]="{ 'white-space': 'pre-line' }"></p-toast>
+
+<div class="page-container">
+  <!-- Header com logo apenas -->
+  <div class="header-section">
+    <div class="header">
+      <div class="logo-container">
+        <img src="assets/imagens/logo.png" alt="Logo" class="logo" />
+      </div>
+      <div class="user-profile-container">
+      <img src="assets/imagens/user_profile.png" alt="User Profile" class="user-profile" />
+    </div>
+  </div>
+</div>
+
+  <!-- Seção de título com botão e filtros -->
+  <div class="title-filter-section">
+    <div class="page-title-with-button">
+      <h1 class="page-title">Gerenciamento de Publicidade</h1>
+      <button class="new-ad-button" (click)="abrirModal()">
+         <i class="pi pi-plus-circle"></i> Nova Publicação
+      </button>
+    </div>
+    
+    <div class="search-filter-bar">
+      <div class="estado-select-wrapper">
+        <p-select 
+          [options]="estados" 
+          optionLabel="descricao" 
+          [(ngModel)]="estadoSelecionado" 
+          (ngModelChange)="filtrarPorEstado()"
+          placeholder="Visualizar todos os Estados"
+          [showClear]="true">
+        </p-select>
+      </div>
+      
+      <div class="search-input-wrapper">
+        <input 
+          type="text" 
+          pInputText 
+          [(ngModel)]="buscaPorTitulo" 
+          (ngModelChange)="filtrarPorTitulo()"
+          (keyup.enter)="filtrarPorTitulo()"
+          placeholder="Buscar por título, descrição ou estado..." 
+          class="search-input" />
+        <button type="button" class="search-button" (click)="filtrarPorTitulo()">
+          <i class="pi pi-search"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resto do HTML permanece igual... -->
+  <div class="content-section">
+    <!-- Publicidades Ativas (sem título) -->
+    <div class="ad-list active-ads">
+      <div *ngFor="let publicidade of publicidadesAtivasFiltradas" class="ad-card">
+        <div class="ad-image">
+          <img 
+            *ngIf="publicidade.imagem_base64" 
+            [src]="publicidade.imagem_base64" 
+            [alt]="publicidade.titulo"
+            (error)="onImageError($event)">
+          <div *ngIf="!publicidade.imagem_base64" class="image-placeholder">
+            <i class="pi pi-image"></i>
+          </div>
+        </div>
+        
+        <div class="ad-content">
+          <div class="ad-main-info">
+            <div class="ad-title">{{ publicidade.titulo }}</div>
+            <div class="ad-description">{{ publicidade.descricao }}</div>
+          </div>
+          
+          <div class="ad-bottom-info">
+            <div class="ad-tags">
+              <span *ngFor="let estado of publicidade.estados" class="ad-tag">
+                <span class="tag-text">{{ estado.descricao }}</span>
+              </span>
+            </div>
+            
+            <div class="ad-status-date">
+              <span class="status-tag">
+                <span class="status-text">Publicidade Atual</span>
+              </span>
+              <div class="date-info">
+                <i class="pi pi-calendar"></i> 
+                <span class="date-text">Ativo até {{ getDataFormatada(publicidade.dt_fim) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ad-actions">
+          <button (click)="op.toggle($event)" #menuButton>
+            <i class="pi pi-ellipsis-v"></i>
+          </button>
+          <p-popover #op [dismissable]="true">
+            <div class="dropdown-menu">
+              <a (click)="abrirModal(publicidade); op.hide()">
+                <i class="pi pi-pencil"></i> Editar
+              </a>
+              <a (click)="onEncerrar(publicidade.id); op.hide()">
+                <i class="pi pi-times-circle"></i> Excluir
+              </a>
+            </div>
+          </p-popover>
+        </div>
+      </div>
+      
+      <div *ngIf="publicidadesAtivasFiltradas.length === 0" class="empty-state">
+        <i class="pi pi-info-circle"></i>
+        <p>Nenhuma publicidade ativa encontrada com os filtros aplicados.</p>
+      </div>
+    </div>
+
+    <!-- Seção de Outras Publicidades -->
+    <h2 class="section-title">Outras Publicidades</h2>
+    <div class="ad-list">
+      <!-- Publicações Agendadas -->
+      <div *ngFor="let publicidade of publicidadesAgendadasFiltradas" class="ad-card">
+        <div class="ad-image">
+          <img 
+            *ngIf="publicidade.imagem_base64" 
+            [src]="publicidade.imagem_base64" 
+            [alt]="publicidade.titulo"
+            (error)="onImageError($event)">
+          <div *ngIf="!publicidade.imagem_base64" class="image-placeholder">
+            <i class="pi pi-image"></i>
+          </div>
+        </div>
+        
+        <div class="ad-content">
+          <div class="ad-main-info">
+            <div class="ad-title">{{ publicidade.titulo }}</div>
+            <div class="ad-description">{{ publicidade.descricao }}</div>
+          </div>
+          
+          <div class="ad-bottom-info">
+            <div class="ad-tags">
+              <span *ngFor="let estado of publicidade.estados" class="ad-tag">
+                <span class="tag-text">{{ estado.descricao }}</span>
+              </span>
+            </div>
+            
+            <div class="ad-status-date">
+              <div class="date-info">
+                <i class="pi pi-calendar"></i> 
+                <span class="date-text">Será publicado em {{ getDataFormatada(publicidade.dt_inicio) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ad-actions">
+          <button (click)="op.toggle($event)" #menuButton>
+            <i class="pi pi-ellipsis-v"></i>
+          </button>
+          <p-popover #op [dismissable]="true">
+            <div class="dropdown-menu">
+              <a (click)="abrirModal(publicidade); op.hide()">
+                <i class="pi pi-pencil"></i> Editar
+              </a>
+              <a (click)="onEncerrar(publicidade.id); op.hide()">
+                <i class="pi pi-times-circle"></i> Excluir
+              </a>
+            </div>
+          </p-popover>
+        </div>
+      </div>
+
+      <!-- Publicações Encerradas -->
+      <div *ngFor="let publicidade of publicidadesEncerradasFiltradas" class="ad-card ended">
+        <div class="ad-image">
+          <img 
+            *ngIf="publicidade.imagem_base64" 
+            [src]="publicidade.imagem_base64" 
+            [alt]="publicidade.titulo"
+            (error)="onImageError($event)">
+          <div *ngIf="!publicidade.imagem_base64" class="image-placeholder">
+            <i class="pi pi-image"></i>
+          </div>
+        </div>
+        
+        <div class="ad-content">
+          <div class="ad-main-info">
+            <div class="ad-title">{{ publicidade.titulo }}</div>
+            <div class="ad-description">{{ publicidade.descricao }}</div>
+          </div>
+          
+          <div class="ad-bottom-info">
+            <div class="ad-tags">
+              <span *ngFor="let estado of publicidade.estados" class="ad-tag">
+                <span class="tag-text">{{ estado.descricao }}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ad-actions">
+          <button (click)="op.toggle($event)" #menuButton>
+            <i class="pi pi-ellipsis-v"></i>
+          </button>
+          <p-popover #op [dismissable]="true">
+            <div class="dropdown-menu">
+              <a (click)="abrirModal(publicidade); op.hide()">
+                <i class="pi pi-pencil"></i> Editar
+              </a>
+              <a (click)="onEncerrar(publicidade.id); op.hide()">
+                <i class="pi pi-times-circle"></i> Excluir
+              </a>
+            </div>
+          </p-popover>
+        </div>
+      </div>
+      
+      <div *ngIf="publicidadesAgendadasFiltradas.length === 0 && publicidadesEncerradasFiltradas.length === 0" class="empty-state">
+        <i class="pi pi-clock"></i>
+        <p>Nenhuma outra publicidade encontrada com os filtros aplicados.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal permanece igual -->
+<p-dialog
+  [(visible)]="exibirModal"
+  [modal]="true"
+  [style]="{ width: '800px', height: '650px' }"
+  [baseZIndex]="10000"
+  [closable]="false"
+  [dismissableMask]="true"
+  [styleClass]="'custom-modal'"
+  [showHeader]="false"
+  (onHide)="onModalHide()">
+
+  <div class="modal-content-wrapper">
+    <div class="modal-header-custom">
+      <h3 class="modal-title">{{ publicidadeSelecionada?.id ? 'Editar publicidade' : 'Nova publicidade' }}</h3>
+      <button type="button" class="close-button" (click)="onCancelar()">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body-custom">
+      <form [formGroup]="publicidadeForm" (ngSubmit)="onSalvar()">
+        <div class="form-field">
+          <label for="estados">Estados contemplados *</label>
+          <p-multiSelect
+            id="estados"
+            [options]="estados"
+            optionLabel="descricao"
+            formControlName="estados"
+            [style]="{ width: '100%' }"
+            placeholder="Selecione..."
+            [filter]="false">
+          </p-multiSelect>
+        </div>
+
+        <div class="form-field">
+          <label for="titulo">Título *</label>
+          <input
+            id="titulo"
+            type="text"
+            pInputText
+            formControlName="titulo"
+            placeholder="Digite o título da publicidade"
+          />
+        </div>
+
+        <div class="form-field">
+          <label for="descricao">Descrição *</label>
+          <textarea
+            id="descricao"
+            pInputTextarea
+            rows="3"
+            formControlName="descricao"
+            placeholder="Descreva a publicidade em detalhes">
+          </textarea>
+        </div>
+
+        <div class="form-field row-fields">
+          <div class="field">
+            <label for="titulo_botao_link">Título do botão *</label>
+            <input
+              id="titulo_botao_link"
+              type="text"
+              pInputText
+              formControlName="titulo_botao_link"
+              placeholder="Ex: Saiba Mais"
+            />
+          </div>
+          <div class="field">
+            <label for="botao_link">Link do botão *</label>
+            <input
+              id="botao_link"
+              type="text"
+              pInputText
+              formControlName="botao_link"
+              placeholder="Ex: https://seusite.com/link"
+            />
+          </div>
+        </div>
+
+        <div class="form-field row-fields">
+          <div class="field">
+            <label for="dt_inicio">Data de publicação *</label>
+            <div class="date-input-wrapper">
+              <p-datePicker
+                id="dt_inicio"
+                formControlName="dt_inicio"
+                dateFormat="dd/mm/yy"
+                placeholder="dd/mm/yyyy"
+                [showIcon]="false"
+                [style]="{ width: '100%' }">
+              </p-datePicker>
+              <i class="pi pi-calendar date-icon"></i>
+            </div>
+          </div>
+          <div class="field">
+            <label for="dt_fim">Data final da publicação *</label>
+            <div class="date-input-wrapper">
+              <p-datePicker
+                id="dt_fim"
+                formControlName="dt_fim"
+                dateFormat="dd/mm/yy"
+                placeholder="dd/mm/yyyy"
+                [showIcon]="false"
+                [style]="{ width: '100%' }">
+              </p-datePicker>
+              <i class="pi pi-calendar date-icon"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="image-upload-section">
+          <h3 class="section-title">IMAGEM DA PUBLICIDADE</h3>
+          
+          <div *ngIf="!imagemPreview && !publicidadeSelecionada?.imagem_base64" 
+               class="drop-area" 
+               (click)="triggerFileInput()">
+            <i class="pi pi-cloud-upload upload-icon"></i>
+            <p class="upload-text">Selecione o arquivo ou arraste aqui para adicioná-lo.</p>
+            <button type="button" class="select-file-button" (click)="$event.stopPropagation(); triggerFileInput()">
+              <i class="pi pi-paperclip"></i> Selecionar arquivo
+            </button>
+          </div>
+
+          <div *ngIf="imagemPreview || publicidadeSelecionada?.imagem_base64" class="selected-image-preview">
+            <img 
+              [src]="imagemPreview || publicidadeSelecionada?.imagem_base64" 
+              alt="Prévia da Publicidade" 
+              class="image-preview"
+              (error)="onImageError($event)">
+            <div class="image-info">
+              <span class="image-filename">{{ selectedFileName || 'imagem-publicidade.png' }}</span>
+              <button type="button" class="change-image-button" (click)="triggerFileInput()">
+                Trocar
+              </button>
+              <button type="button" class="remove-image-button" (click)="removeImage()">
+                <i class="pi pi-trash"></i>
+              </button>
+            </div>
+          </div>
+
+          <input 
+            type="file" 
+            #fileInput
+            id="imageUploadInput" 
+            (change)="onFileChange($event)" 
+            accept="image/*" 
+            style="display: none;">
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-footer-custom">
+      <button
+        type="button"
+        class="cancel-button"
+        (click)="onCancelar()">
+        <i class="pi pi-times"></i> Cancelar
+      </button>
+      <button type="button" class="confirm-button" (click)="onSalvar()">
+        <i class="pi pi-check"></i> Confirmar
+      </button>
+    </div>
+  </div>
+</p-dialog>

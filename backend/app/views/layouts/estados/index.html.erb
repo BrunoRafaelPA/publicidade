@@ -1,0 +1,21 @@
+<h1>Lista de Estados</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Descrição</th>
+      <th>Sigla</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @estados.each do |estado| %>
+      <tr>
+        <td><%= estado.descricao %></td>
+        <td><%= estado.sigla %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<br>
+<%= link_to "Novo Estado", new_estado_path %>

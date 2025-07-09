@@ -1,0 +1,20 @@
+<h1>Adicionar Novo Estado</h1>
+
+<%= form_with model: @estado, url: estados_path do |form| %>
+  <div>
+    <%= form.label :descricao, "Descrição" %>
+    <%= form.text_field :descricao %>
+  </div>
+
+  <div>
+    <%= form.label :sigla, "Sigla" %>
+    <%= form.text_field :sigla %>
+  </div>
+
+  <div>
+    <%= form.submit "Salvar" %>
+  </div>
+<% end %>
+
+<br>
+<%= link_to "Voltar para a Lista", estados_path %>
