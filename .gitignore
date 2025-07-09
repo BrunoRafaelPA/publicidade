@@ -48,3 +48,4 @@ Thumbs.db
 /frontend/dist/
 /frontend/.angular/
 /frontend/coverage/
+"@ | Out-File -FilePath .gitignore -Encoding UTF8
