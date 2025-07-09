@@ -28,7 +28,7 @@ services:
     ports:
       - "${BACKEND_PORT}:3000"
     volumes:
-      - ./backend:/app
+      #- ./backend:/app
       - bundle_cache:/usr/local/bundle
       - rails_storage:/app/storage
       - rails_tmp:/app/tmp
@@ -39,20 +39,6 @@ services:
       - app-network
     stdin_open: true
     tty: true
-    command: >
-      bash -c "
-        echo 'Aguardando banco de dados...' &&
-        sleep 10 &&
-        bundle install &&
-        echo 'Removendo PID se existir...' &&
-        rm -f tmp/pids/server.pid &&
-        echo 'Criando banco de dados...' &&
-        bundle exec rails db:create 2>/dev/null || echo 'Banco já existe' &&
-        echo 'Executando migrações...' &&
-        bundle exec rails db:migrate 2>/dev/null || echo 'Nenhuma migração pendente' &&
-        echo 'Iniciando servidor Rails...' &&
-        bundle exec rails server -b 0.0.0.0 -p 3000
-      "
     restart: unless-stopped
 
   frontend:
