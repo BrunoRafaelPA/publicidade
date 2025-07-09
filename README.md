@@ -17,3 +17,9 @@ Sistema completo de gerenciamento de publicidades com backend Rails e frontend A
 
 ##  Instalação e Execução
 
+- Verificar se Docker Desktop esta aberto no sistema
+- Windows Power Shell
+- cd (pasta que vai colocar o projeto)
+- git clone https://github.com/BrunoRafaelPA/publicidade.git
+- cd .\publicidade\
+- docker compose up --build
