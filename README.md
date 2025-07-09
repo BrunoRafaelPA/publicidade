@@ -23,3 +23,8 @@ Sistema completo de gerenciamento de publicidades com backend Rails e frontend A
 - git clone https://github.com/BrunoRafaelPA/publicidade.git
 - cd .\publicidade\
 - docker compose up --build
+
+##  Link para acessar
+
+- Backand http://localhost:3000/api/v1/estados
+- Frontend  http://localhost:4200
