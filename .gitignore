@@ -1,43 +1,42 @@
 # .gitignore
-# Arquivos de ambiente
-.env
+#.env
 .env.local
 .env.development
 .env.production
 
-# Logs
+
 *.log
 logs/
 
-# Dependências Node.js
+
 node_modules/
 npm-debug.log*
 
-# Dependências Ruby
+
 vendor/bundle/
 
-# Arquivos temporários
+
 tmp/
 temp/
 
-# Arquivos de banco local
+
 *.sql
 backup_*.sql
 
-# Arquivos do sistema
+
 .DS_Store
 Thumbs.db
 
-# IDEs
+
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# Docker
+
 .dockerignore
 
-# Rails específicos
+
 /backend/log/*
 /backend/tmp/*
 /backend/storage/*
@@ -45,7 +44,7 @@ Thumbs.db
 !/backend/tmp/.keep
 !/backend/storage/.keep
 
-# Angular específicos
+
 /frontend/dist/
 /frontend/.angular/
 /frontend/coverage/
